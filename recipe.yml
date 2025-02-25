@@ -1,5 +1,5 @@
-name: VeryLoud's Vanilla Desktop
-id: vanilla-veryloud
+name: Vesper's Vanilla Desktop
+id: vanilla-vesper
 stages:
 - id: build
   base: ghcr.io/vanilla-os/desktop:main
