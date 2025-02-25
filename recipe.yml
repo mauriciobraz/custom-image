@@ -1,0 +1,69 @@
+name: VeryLoud's Vanilla Desktop
+id: vanilla-veryloud
+stages:
+- id: build
+  base: ghcr.io/vanilla-os/desktop:main
+  singlelayer: false
+  labels:
+    maintainer: Maxim Therrien
+  args:
+    DEBIAN_FRONTEND: noninteractive # Set the image environment as non-interactive
+  
+  # Commands to run first before building the modules
+  runs:
+    commands:
+      - echo 'APT::Install-Recommends "1";' > /etc/apt/apt.conf.d/01norecommends
+
+  modules:
+  - name: init-setup
+    type: shell
+    commands:
+    - lpkg --unlock
+    - apt-get update
+
+  # BEGIN CUSTOM ACTIONS
+
+  - name: 1password
+    type: includes
+    includes:
+      - modules/50-install-1password.yml
+
+  - name: qemu-kvm
+    type: includes
+    includes:
+      - modules/50-setup-qemu-kvm.yml
+      
+  # END CUSTOM ACTIONS
+
+  - name: set-image-name-abroot
+    type: includes
+    includes:
+      - modules/80-set-image-abroot-config.yml
+
+  - name: cleanup
+    type: shell
+    commands:
+    - apt-get autoremove -y
+    - apt-get clean
+    - lpkg --lock
+
+  - name: fsguard
+    type: fsguard
+    CustomFsGuard: false
+    FsGuardLocation: "/usr/sbin/FsGuard"
+    GenerateKey: true
+    FilelistPaths: ["/usr/bin"]
+    modules:
+      - name: remove-prev-fsguard
+        type: shell
+        commands:
+          - rm -rf /FsGuard 
+          - rm -f ./minisign.pub ./minisign.key 
+          - chmod +x /usr/sbin/init
+
+  - name: cleanup2
+    type: shell
+    commands:
+      - rm -rf /tmp/*
+      - rm -rf /var/tmp/*
+      - rm -rf /sources
